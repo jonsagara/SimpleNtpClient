@@ -108,10 +108,10 @@ namespace ConsoleApp1
             const int transmitTimestampOffset = 40;
 
             // Get the seconds part.
-            ulong seconds = BitConverter.ToUInt32(ntpData, transmitTimestampOffset);
+            uint seconds = BitConverter.ToUInt32(ntpData, transmitTimestampOffset);
 
             // Get the fractional second intervals part.
-            ulong fractionalSecondIntervals = BitConverter.ToUInt32(ntpData, transmitTimestampOffset + 4);
+            uint fractionalSecondIntervals = BitConverter.ToUInt32(ntpData, transmitTimestampOffset + 4);
 
             // NTP bits are numbered in Big Endian fashion (see: https://tools.ietf.org/html/rfc4330#section-3). 
             //   Windows uses Little Endian, so we have to swap them.
@@ -136,10 +136,12 @@ namespace ConsoleApp1
             //   From this, you can use standard techniques to compute milliseconds, microseconds, etc.
             //
 
-            // Convert the whole seconds to milliseconds.
-            ulong totalMilliseconds = (seconds * 1000);
+            // Convert the whole seconds to milliseconds. Note we need to make this an explicit ulong operation, or
+            //   else we'll lose some digits.
+            ulong totalMilliseconds = ((ulong)seconds * 1000);
 
-            // Convert the fractional second intervals to seconds, and then to milliseconds.
+            // Convert the fractional second intervals to seconds, and then to milliseconds. Same as above - this 
+            //   needs to be an explicit ulong operation in order to maintain precision.
             double secondsPerInterval = 1.0 / 0x100000000L;
             totalMilliseconds += (ulong)(fractionalSecondIntervals * secondsPerInterval) * 1000;
 
@@ -148,12 +150,12 @@ namespace ConsoleApp1
         }
 
         // See: http://stackoverflow.com/a/3294698/731
-        private static uint SwapEndianness(ulong x)
+        static uint SwapEndianness(uint x)
         {
-            return (uint)(((x & 0x000000ff) << 24) +
-                          ((x & 0x0000ff00) << 8) +
-                          ((x & 0x00ff0000) >> 8) +
-                          ((x & 0xff000000) >> 24));
+            return (((x & 0x000000ff) << 24) +
+                    ((x & 0x0000ff00) << 8) +
+                    ((x & 0x00ff0000) >> 8) +
+                    ((x & 0xff000000) >> 24));
         }
 
         private static void WriteError(string message)
