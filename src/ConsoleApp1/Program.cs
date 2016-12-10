@@ -35,6 +35,11 @@ namespace ConsoleApp1
         private static readonly DateTime _ntpEpochUtc = new DateTime(1900, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         /// <summary>
+        /// For fractional seconds, the number of seconds per interval (about 232 picoseconds).
+        /// </summary>
+        private static readonly double _ntpSecondsPerInterval = 1.0 / 0x100000000L;
+
+        /// <summary>
         /// Lest you think I'm an actual network programmer, I adapted this code from a Stack Overflow answer:
         /// http://stackoverflow.com/a/12150289/731
         /// </summary>
@@ -142,8 +147,7 @@ namespace ConsoleApp1
 
             // Convert the fractional second intervals to seconds, and then to milliseconds. Same as above - this 
             //   needs to be an explicit ulong operation in order to maintain precision.
-            double secondsPerInterval = 1.0 / 0x100000000L;
-            totalMilliseconds += (ulong)(fractionalSecondIntervals * secondsPerInterval) * 1000;
+            totalMilliseconds += (ulong)(fractionalSecondIntervals * _ntpSecondsPerInterval) * 1000;
 
             // Add milliseconds to the epoch to get the network time.
             return _ntpEpochUtc.AddMilliseconds(totalMilliseconds);
