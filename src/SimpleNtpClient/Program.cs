@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 
-namespace ConsoleApp1
+namespace SimpleNtpClient
 {
     public class Program
     {
@@ -50,7 +47,7 @@ namespace ConsoleApp1
             // NTP message size: 16 bytes of the digest (RFC 2030: https://tools.ietf.org/html/rfc2030#section-4)
             var ntpData = new byte[48];
 
-            // The first byte contains the Leap Indicator, Version Number, and Mode values:
+            // The first byte contains the Lead Indicator, Version Number, and Mode values:
             //   * LI: two-bit code. No meaning in client request. Set to 0.
             //   * VN: three-bit integer. Set to 3 to use Version 3 (IPv4 only).
             //   * Mode: three-bit integer. Set to 3 to indicate that this is a client request.
