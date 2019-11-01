@@ -1,28 +1,30 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 
 namespace SimpleNtpClient
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
             const string ntpServerHostName = "time.windows.com";
 
             try
             {
-                var networkTimeUtc = GetNetworkTimeUtc(ntpServerHostName);
+                var networkTimeUtc = await GetNetworkTimeUtcAsync(ntpServerHostName);
                 Console.WriteLine($"Network Time UTC: {networkTimeUtc}");
+
+                return 0;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Unhandled exception when trying to retrieve network time from {ntpServerHostName}:");
                 Console.WriteLine(ex);
-            }
 
-            Console.WriteLine("Press any key to quit...");
-            Console.ReadKey();
+                return 1;
+            }
         }
 
 
@@ -42,7 +44,7 @@ namespace SimpleNtpClient
         /// </summary>
         /// <param name="ntpServerHostName"></param>
         /// <returns></returns>
-        private static DateTime? GetNetworkTimeUtc(string ntpServerHostName)
+        private static async Task<DateTime?> GetNetworkTimeUtcAsync(string ntpServerHostName)
         {
             // NTP message size: 16 bytes of the digest (RFC 2030: https://tools.ietf.org/html/rfc2030#section-4)
             var ntpData = new byte[48];
@@ -67,9 +69,7 @@ namespace SimpleNtpClient
 
             try
             {
-                hostEntry = Dns.GetHostEntryAsync(ntpServerHostName)
-                    .GetAwaiter()
-                    .GetResult();
+                hostEntry = await Dns.GetHostEntryAsync(ntpServerHostName);
             }
             catch (SocketException sex) when (sex.SocketErrorCode == SocketError.HostNotFound)
             {
@@ -93,9 +93,9 @@ namespace SimpleNtpClient
                     // Timeout after 3 seconds so that the program doesn't hang indefinitely.
                     socket.ReceiveTimeout = 3 * 1000;
 
-                    socket.Connect(ipEndPoint);
-                    socket.Send(ntpData);
-                    socket.Receive(ntpData);
+                    await socket.ConnectAsync(ipEndPoint);
+                    await socket.SendAsync(ntpData.AsMemory(), SocketFlags.None);
+                    await socket.ReceiveAsync(ntpData.AsMemory(), SocketFlags.None);
                 }
             }
             catch (SocketException sex) when (sex.SocketErrorCode == SocketError.TimedOut)
